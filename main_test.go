@@ -9,7 +9,7 @@ const bufSize = 104857596
 const itemSize = 12
 const stableSeed = 50
 
-func bufInit(t *testing.T) []byte {
+func bufInit(t testing.TB) []byte {
 	t.Helper()
 	buf := make([]byte, bufSize)
 	rnd := rand.New(rand.NewSource(stableSeed))
@@ -28,7 +28,29 @@ func TestSortStd(t *testing.T) {
 	sortStd(buf, itemSize)
 }
 
+func BenchmarkSortStd(b *testing.B) {
+	b.ReportAllocs()
+
+	buf := bufInit(b)
+	b.ResetTimer()
+
+	for i := 0; i < b.N; i++ {
+		sortStd(buf, itemSize)
+	}
+}
+
 func TestSortStdStable(t *testing.T) {
 	buf := bufInit(t)
 	sortStdStable(buf, itemSize)
+}
+
+func BenchmarkSortStdStable(b *testing.B) {
+	b.ReportAllocs()
+
+	buf := bufInit(b)
+	b.ResetTimer()
+
+	for i := 0; i < b.N; i++ {
+		sortStdStable(buf, itemSize)
+	}
 }

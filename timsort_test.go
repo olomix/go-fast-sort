@@ -9,6 +9,35 @@ import (
 
 type intSorter struct {
 	arr []int
+	tmp []int
+}
+
+func (is *intSorter) CopyItem(dst, src int) {
+	is.arr[dst] = is.arr[src]
+}
+
+func (is *intSorter) CopyItemsFromTemp(dst, src, ln int) {
+	if ln == 1 {
+		is.arr[dst] = is.tmp[src]
+	} else {
+		copy(is.arr[dst:dst+ln], is.tmp[src:src+ln])
+	}
+}
+
+func (is *intSorter) TmpLtEq(tmpIdx int, idx int) bool {
+	return is.tmp[tmpIdx] <= is.arr[idx]
+}
+
+func (is *intSorter) CopyTemp(start int, end int) {
+	if end <= start {
+		return
+	}
+	if cap(is.tmp) < end-start {
+		is.tmp = make([]int, end-start)
+	} else {
+		is.tmp = is.tmp[0 : end-start]
+	}
+	copy(is.tmp, is.arr[start:end])
 }
 
 func (is *intSorter) LtEq(i, j int) bool {
@@ -41,6 +70,35 @@ type testS1 struct {
 
 type structSorter struct {
 	arr []testS1
+	tmp []testS1
+}
+
+func (ss *structSorter) CopyItem(dst, src int) {
+	ss.arr[dst] = ss.arr[src]
+}
+
+func (ss *structSorter) CopyItemsFromTemp(dst, src, ln int) {
+	if ln == 1 {
+		ss.arr[dst] = ss.tmp[src]
+	} else {
+		copy(ss.arr[dst:dst+ln], ss.tmp[src:src+ln])
+	}
+}
+
+func (ss *structSorter) TmpLtEq(tmpIdx int, idx int) bool {
+	return ss.tmp[tmpIdx].key <= ss.arr[idx].key
+}
+
+func (ss *structSorter) CopyTemp(start int, end int) {
+	if end <= start {
+		return
+	}
+	if cap(ss.tmp) < end-start {
+		ss.tmp = make([]testS1, end-start)
+	} else {
+		ss.tmp = ss.tmp[0 : end-start]
+	}
+	copy(ss.tmp, ss.arr[start:end])
 }
 
 func (ss *structSorter) Less(i, j int) bool {
@@ -169,5 +227,118 @@ func TestSortRunIsStable(t *testing.T) {
 				i, is.arr[i], is2.arr[i],
 			)
 		}
+	}
+}
+
+func Test1(t *testing.T) {
+	var i int
+	for i = 3; i < 5; i++ {
+
+	}
+	t.Log(i)
+}
+
+func TestFindLastElm(t *testing.T) {
+	testCases := []struct {
+		title    string
+		arr      []int
+		expected int
+		l, r     run
+	}{
+		{
+			title:    "first",
+			arr:      []int{1, 2, 3, 4, 3, 4, 5, 6},
+			expected: 5,
+			l:        run{ptr: 0, size: 4},
+			r:        run{ptr: 4, size: 4},
+		},
+		{
+			title:    "no such element",
+			arr:      []int{11, 12, 13, 14, 3, 4, 5, 6},
+			expected: 8,
+			l:        run{ptr: 0, size: 4},
+			r:        run{ptr: 4, size: 4},
+		},
+		{
+			title:    "first element",
+			arr:      []int{11, 12, 13, 14, 23, 24, 25, 26},
+			expected: 4,
+			l:        run{ptr: 0, size: 4},
+			r:        run{ptr: 4, size: 4},
+		},
+	}
+	for i := range testCases {
+		tc := testCases[i]
+		t.Run(tc.title, func(t *testing.T) {
+			is := &intSorter{arr: tc.arr}
+			x := findLastElm(is, tc.l, tc.r)
+			if x != tc.expected {
+				t.Fatalf("%v: expected %v got %v", tc.title, tc.expected, x)
+			}
+		})
+	}
+}
+
+func TestMergeRuns(t *testing.T) {
+	testCases := []struct {
+		title    string
+		arr      []testS1
+		expected []testS1
+		l, r     run
+	}{
+		{
+			title: "one element in left",
+			arr: []testS1{
+				{1, 11}, {2, 12}, {3, 13}, {4, 15},
+				{3, 16}, {4, 17}, {5, 18}, {6, 11},
+			},
+			expected: []testS1{
+				{1, 11}, {2, 12}, {3, 13}, {3, 16},
+				{4, 15}, {4, 17}, {5, 18}, {6, 11},
+			},
+			l: run{ptr: 0, size: 4},
+			r: run{ptr: 4, size: 4},
+		},
+		{
+			title: "already sorted",
+			arr: []testS1{
+				{1, 11}, {2, 12}, {3, 13}, {4, 15}, {5, 16}, {6, 17}, {7, 18},
+				{8, 11},
+			},
+			expected: []testS1{
+				{1, 11}, {2, 12}, {3, 13}, {4, 15}, {5, 16}, {6, 17}, {7, 18},
+				{8, 11},
+			},
+			l: run{ptr: 0, size: 4},
+			r: run{ptr: 4, size: 4},
+		},
+		{
+			title: "all left moves to temp",
+			arr: []testS1{
+				{20, 1},
+				{11, 11}, {13, 12}, {15, 13}, {17, 14},
+				{5, 15}, {14, 16}, {15, 17}, {16, 18},
+				{20, 2},
+			},
+			expected: []testS1{
+				{20, 1}, {5, 15}, {11, 11}, {13, 12}, {14, 16}, {15, 13},
+				{15, 17}, {16, 18}, {17, 14}, {20, 2},
+			},
+			l: run{ptr: 1, size: 4},
+			r: run{ptr: 5, size: 4},
+		},
+	}
+
+	for i := range testCases {
+		tc := testCases[i]
+		if tc.title != "all left moves to temp" {
+			continue
+		}
+		t.Run(tc.title, func(t *testing.T) {
+			mergeRuns(&structSorter{arr: tc.arr}, tc.l, tc.r)
+			if !reflect.DeepEqual(tc.expected, tc.arr) {
+				t.Fatal(tc.arr)
+			}
+		})
 	}
 }

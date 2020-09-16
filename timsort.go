@@ -7,6 +7,11 @@ type TimSorter interface {
 	// Move element from position src to position dst shifting all elements
 	// in between.
 	Move(dst int, src int)
+	CopyTemp(start int, end int)
+	// index tmpIdx point to temp storage, indxe idx to regular storage
+	TmpLtEq(tmpIdx int, idx int) bool
+	CopyItem(dst, src int)
+	CopyItemsFromTemp(dst, src, ln int)
 }
 
 type run struct {
@@ -73,6 +78,75 @@ func mergeStack(s TimSorter, stack []run) {
 
 func normalizeStack(s TimSorter, stack []run) {
 	panic("not implemented")
+}
+
+func mergeRuns(s TimSorter, l, r run) {
+	if l.size < 1 {
+		panic("left run has zero size")
+	}
+	if r.size < 1 {
+		panic("right run has zero size")
+	}
+
+	var elm1 int // the pointer to first element in left run that is greater
+	// then first element in right run
+	for elm1 = l.ptr; elm1 < l.ptr+l.size; elm1++ {
+		if s.LtEq(elm1, r.ptr) {
+			continue
+		}
+		break
+	}
+	if elm1 == l.ptr+l.size {
+		// two runs already merged
+		return
+	}
+
+	s.CopyTemp(elm1, l.ptr+l.size)
+
+	lastElm := findLastElm(s, l, r)
+
+	cursorL := 0
+	lnL := l.ptr + l.size - elm1
+	cursorR := r.ptr
+	lnR := lastElm - r.ptr
+	dst := elm1
+
+	for lnL > 0 && lnR > 0 {
+		if s.TmpLtEq(cursorL, cursorR) {
+			s.CopyItemsFromTemp(dst, cursorL, 1)
+			cursorL++
+			lnL--
+		} else {
+			s.CopyItem(dst, cursorR)
+			cursorR++
+			lnR--
+		}
+		dst++
+	}
+
+	if lnL > 0 {
+		s.CopyItemsFromTemp(dst, cursorL, lnL)
+	}
+
+	for lnR > 0 {
+		panic("right run should be exhausted")
+	}
+}
+
+// find last element in right run that is greader then last element is left run
+// example:
+// left: [1,2,3,4]
+// right: [3,4,5,6]
+// return index of value 5 from right run
+func findLastElm(s TimSorter, l, r run) int {
+	var lastElm int
+	for lastElm = r.ptr + r.size; lastElm > r.ptr; lastElm-- {
+		if s.LtEq(l.ptr+l.size-1, lastElm-1) {
+			continue
+		}
+		break
+	}
+	return lastElm
 }
 
 // sort current run where index of first unsorted element is unsortedIdx

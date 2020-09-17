@@ -73,7 +73,24 @@ func TimSort(s TimSorter) {
 }
 
 func mergeStack(s TimSorter, stack []run) {
-	panic("not implemented")
+	if len(stack) <= 1 {
+		return
+	}
+	for len(stack) > 1 {
+		// look for two consecutive runs with minimum summary length
+		idx := 0
+		sz := stack[idx].size + stack[idx+1].size
+		for i := 1; i < len(stack)-1; i++ {
+			newSz := stack[i].size + stack[i+1].size
+			if newSz < sz {
+				idx = i
+				sz = newSz
+			}
+		}
+		mergeRuns(s, stack[idx], stack[idx+1])
+		stack[idx].size += stack[idx+1].size
+		stack = append(stack[:idx+1], stack[idx+2:]...)
+	}
 }
 
 func normalizeStack(s TimSorter, stack []run) {

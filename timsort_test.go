@@ -342,3 +342,24 @@ func TestMergeRuns(t *testing.T) {
 		})
 	}
 }
+
+func TestMergeStack(t *testing.T) {
+	arr := []testS1{
+		{1, 11}, {2, 12}, {7, 13}, {9, 15}, {10, 16}, {11, 17},
+		{3, 18}, {4, 19}, {8, 20}, {10, 21},
+		{3, 22}, {10, 23}, {11, 24}, {12, 25}, {13, 26},
+	}
+	expected := []testS1{
+		{1, 11}, {2, 12}, {3, 18}, {3, 22}, {4, 19}, {7, 13}, {8, 20}, {9, 15},
+		{10, 16}, {10, 21}, {10, 23}, {11, 17}, {11, 24}, {12, 25}, {13, 26},
+	}
+	stack := []run{
+		{ptr: 0, size: 6},
+		{ptr: 6, size: 4},
+		{ptr: 10, size: 5},
+	}
+	mergeStack(&structSorter{arr: arr}, stack)
+	if !reflect.DeepEqual(arr, expected) {
+		t.Fatal(arr)
+	}
+}

@@ -58,7 +58,7 @@ func TimSort(s TimSorter) {
 		}
 
 		stack = append(stack, currentRun)
-		normalizeStack(s, stack)
+		stack = normalizeStack(s, stack)
 
 		if idx == ln {
 			break
@@ -93,8 +93,39 @@ func mergeStack(s TimSorter, stack []run) {
 	}
 }
 
-func normalizeStack(s TimSorter, stack []run) {
-	panic("not implemented")
+func normalizeStack(s TimSorter, stack []run) []run {
+LOOP:
+	for {
+		if len(stack) <= 1 {
+			break
+		}
+		if len(stack) == 2 {
+			if stack[1].size > stack[0].size {
+				mergeRuns(s, stack[0], stack[1])
+				stack[0].size += stack[1].size
+				stack = stack[:1]
+			}
+			break
+		}
+		for i := len(stack) - 3; i >= 0; i-- {
+			if stack[i].size > stack[i+1].size+stack[i+2].size &&
+				stack[i+1].size > stack[i+2].size {
+				continue
+			}
+			if stack[i].size < stack[i+2].size {
+				mergeRuns(s, stack[i], stack[i+1])
+				stack[i].size = stack[i].size + stack[i+1].size
+				stack = append(stack[:i+1], stack[i+2:]...)
+			} else {
+				mergeRuns(s, stack[i+1], stack[i+2])
+				stack[i+1].size += stack[i+2].size
+				stack = append(stack[:i+2], stack[i+3:]...)
+			}
+			continue LOOP
+		}
+		break
+	}
+	return stack
 }
 
 func mergeRuns(s TimSorter, l, r run) {

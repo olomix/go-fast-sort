@@ -363,3 +363,51 @@ func TestMergeStack(t *testing.T) {
 		t.Fatal(arr)
 	}
 }
+
+func TestNormalizeStack(t *testing.T) {
+	testCases := []struct {
+		title         string
+		stack, expect []run
+	}{
+		{
+			title: "one left",
+			stack: []run{
+				{ptr: 0, size: 5},
+				{ptr: 5, size: 1},
+				{ptr: 6, size: 3},
+				{ptr: 9, size: 9},
+				{ptr: 18, size: 4},
+				{ptr: 22, size: 2},
+			},
+			expect: []run{
+				{ptr: 0, size: 24},
+			},
+		},
+		{
+			title: "one merged",
+			stack: []run{
+				{ptr: 0, size: 16},
+				{ptr: 16, size: 10},
+				{ptr: 26, size: 5},
+				{ptr: 31, size: 2},
+				{ptr: 33, size: 2},
+			},
+			expect: []run{
+				{ptr: 0, size: 16},
+				{ptr: 16, size: 10},
+				{ptr: 26, size: 5},
+				{ptr: 31, size: 4},
+			},
+		},
+	}
+	for i := range testCases {
+		tc := testCases[i]
+		t.Run(tc.title, func(t *testing.T) {
+			ln := tc.stack[len(tc.stack)-1].ptr + tc.stack[len(tc.stack)-1].size
+			stack := normalizeStack(&intSorter{arr: make([]int, ln)}, tc.stack)
+			if !reflect.DeepEqual(tc.expect, stack) {
+				t.Fatal(stack)
+			}
+		})
+	}
+}

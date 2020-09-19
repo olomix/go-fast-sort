@@ -1,11 +1,16 @@
 package go_fast_sort
 
 import (
+	"bytes"
+	"log"
+	"math"
 	"math/rand"
 	"testing"
 )
 
 const bufSize = 104857596
+
+//const bufSize = 120
 const itemSize = 12
 const stableSeed = 50
 
@@ -53,4 +58,44 @@ func BenchmarkSortStdStable(b *testing.B) {
 	for i := 0; i < b.N; i++ {
 		sortStdStable(buf, itemSize)
 	}
+}
+
+func BenchmarkSortTimSort(b *testing.B) {
+	b.ReportAllocs()
+
+	buf := bufInit(b)
+	b.ResetTimer()
+
+	for i := 0; i < b.N; i++ {
+		timSort(buf, itemSize)
+	}
+}
+
+func TestTimSort(t *testing.T) {
+	bufTimSorted := bufInit(t)
+	bufStdStableSorted := make([]byte, len(bufTimSorted))
+	n := copy(bufStdStableSorted, bufTimSorted)
+	if n != bufSize {
+		t.Fatal(n)
+	}
+
+	//fmtArray(bufTimSorted)
+	timSort(bufTimSorted, itemSize)
+	//fmtArray(bufTimSorted)
+	//fmtArray(bufStdStableSorted)
+	sortStdStable(bufStdStableSorted, itemSize)
+	//fmtArray(bufStdStableSorted)
+	if !bytes.Equal(bufTimSorted, bufStdStableSorted) {
+		t.Fatal("not equal")
+	}
+}
+
+func fmtArray(in []byte) {
+	log.Printf("[ start ]")
+	for i := 0; i < bufSize; i += itemSize {
+		id := ui64(in, i)
+		f := math.Float32frombits(ui32(in, i+8))
+		log.Printf("%v: %v", id, f)
+	}
+	log.Printf("[ end ]")
 }

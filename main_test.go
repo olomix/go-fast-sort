@@ -2,7 +2,6 @@ package go_fast_sort
 
 import (
 	"bytes"
-	"log"
 	"math"
 	"math/rand"
 	"testing"
@@ -10,7 +9,9 @@ import (
 
 const bufSize = 104857596
 
-//const bufSize = 120
+//const bufSize = 28814304
+
+//const bufSize = 12288
 const itemSize = 12
 const stableSeed = 50
 
@@ -90,12 +91,12 @@ func TestTimSort(t *testing.T) {
 	}
 }
 
-func fmtArray(in []byte) {
-	log.Printf("[ start ]")
-	for i := 0; i < bufSize; i += itemSize {
+func fmtArray(tb testing.TB, in []byte, start int) {
+	tb.Logf("[ start ]")
+	for i := 0; i < len(in); i += itemSize {
 		id := ui64(in, i)
 		f := math.Float32frombits(ui32(in, i+8))
-		log.Printf("%v: %v", id, f)
+		tb.Logf("%v %v %v", i/itemSize+start, id, f)
 	}
-	log.Printf("[ end ]")
+	tb.Logf("[ end ]")
 }

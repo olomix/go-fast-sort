@@ -477,7 +477,7 @@ func gallopLeft(
 	if ts2.Less(base+hint, cursor, isArrayTmp, isCursorTmp) {
 		// Gallop right until arr[base+hint+lastOfs] < key <= arr[base+hint+ofs]
 		maxOfs := ln - hint
-		if ofs < maxOfs && ts2.Less(base+hint+ofs, cursor, isArrayTmp, isCursorTmp) {
+		for ofs < maxOfs && ts2.Less(base+hint+ofs, cursor, isArrayTmp, isCursorTmp) {
 			lastOfs = ofs
 			ofs = (ofs << 1) + 1
 			if ofs <= 0 { // int overflow
@@ -643,7 +643,7 @@ func (h *timSortHandler) mergeLo(ts2 TimSorter2, base1, len1, base2, len2 int) {
 	if len1 == 1 {
 		ts2.Copy(dest, cursor2, len2, false, false)
 		// Last elt of run 1 to end of merge
-		ts2.Copy(dest, cursor1, len2, false, true)
+		ts2.Copy(dest+len2, cursor1, 1, false, true)
 		return
 	}
 
